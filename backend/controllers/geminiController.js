@@ -1,27 +1,23 @@
-// controllers/gemini.controller.js
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
-
 dotenv.config();
+import { GoogleGenAI } from "@google/genai";
+import TestCase from "../models/TestCase.js"; // add this import at the top
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Generate test payloads
-// backend/controllers/geminiController.js
 export const generatePayloads = async (req, res) => {
   try {
-    console.log("API CALLED");
+    console.log("🔍 Gemini AI - generatePayloads called");
 
-    const { url, apiName, apiDescription } = req.body;
+    const { url, apiName, apiDescription, apiId } = req.body; // 👈 added apiId
 
     if (!apiDescription) {
-      return res.status(400).json({
-        message: "API description is required",
-      });
+      return res.status(400).json({ message: "API description is required" });
     }
 
-    console.log(req.body);
+    if (!apiId) {
+      return res.status(400).json({ message: "apiId is required" });
+    }
 
     const prompt = `
 You are a senior QA automation engineer.
@@ -69,94 +65,118 @@ Rules:
 - No explanation
 `;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash-preview",
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-lite",
+      contents: prompt,
     });
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = response.text;
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error("No JSON array found in AI response");
 
-    if (!jsonMatch) {
-      throw new Error("No JSON array found in AI response");
-    }
+    let cleanedText = jsonMatch[0]
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .replace(
+        /"[^"]*"\.repeat\((\d+)\)/g,
+        (_, n) => `"${"a".repeat(Number(n))}"`,
+      )
+      .replace(/[\x00-\x1F\x7F]/g, " ")
+      .replace(/,(\s*[}\]])/g, "$1")
+      .trim();
 
-    const cleanedText = jsonMatch[0];
-
-    const payloads = JSON.parse(cleanedText);
-
-    if (!Array.isArray(payloads) || payloads.length !== 10) {
+    let payloads;
+    try {
+      payloads = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error("❌ Raw AI response:\n", text);
       return res.status(500).json({
-        message: "AI did not generate exactly 10 test cases",
-        raw: payloads,
+        message: "AI returned malformed JSON",
+        error: parseError.message,
+        raw: text.slice(0, 500),
       });
     }
 
-    return res.json({
-      success: true,
-      payloads,
-    });
+    if (!Array.isArray(payloads)) {
+      return res
+        .status(500)
+        .json({ message: "AI did not return a valid array", raw: text });
+    }
+
+    console.log(`✅ Generated ${payloads.length} test cases`);
+
+    // 👇 Everything below is new
+
+    // Delete old test cases for this API before saving new ones
+    await TestCase.deleteMany({ apiId });
+
+    // Map each AI payload into a TestCase document
+    const testCaseDocs = payloads.map((p) => ({
+      apiId,
+      payload: p,
+      snapshot: {
+        expectedStatus: p.expectedStatus,
+        expectedResult: p.expectedResult,
+      }, // 👈 set from AI data immediately, not from first run
+      lastRun: {
+        statusCode: null,
+        actualResponse: null,
+        passed: null,
+        timestamp: null,
+      },
+    }));
+
+    const saved = await TestCase.insertMany(testCaseDocs);
+
+    return res.json({ success: true, payloads: saved });
   } catch (error) {
-    console.error("AI Generation Error:", error);
-    return res.status(500).json({
-      message: "Server Error",
-      error: error.message,
-    });
+    console.error("❌ Gemini Generation Error:", error);
+    return res
+      .status(500)
+      .json({ message: "Server Error", error: error.message });
   }
 };
 
-// General text generation
+// ─── General Text Generation ──────────────────────────────────────────────────
 export const generateContent = async (req, res) => {
   try {
     const { prompt } = req.body;
+    if (!prompt) return res.status(400).json({ message: "Prompt is required" });
 
-    if (!prompt) {
-      return res.status(400).json({ message: "Prompt is required" });
-    }
-
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    res.json({
-      success: true,
-      response: text,
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-lite",
+      contents: prompt,
     });
+
+    return res.json({ success: true, response: response.text });
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({
-      message: "Error generating content",
-      error: error.message,
-    });
+    return res
+      .status(500)
+      .json({ message: "Error generating content", error: error.message });
   }
 };
 
+// ─── Test Gemini Connection ───────────────────────────────────────────────────
 export const testGemini = async (req, res) => {
   try {
-    console.log("Gemini test endpoint called");
+    console.log("🧪 Gemini test endpoint called");
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash-preview",
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-lite",
+      contents: "Say hello and confirm the API is working.",
     });
 
-    const result = await model.generateContent(
-      "Say hello and confirm the API is working.",
-    );
-
-    const text = result.response.text();
-
-    console.log("Gemini response:", text);
+    console.log("✅ Gemini response:", response.text);
 
     return res.json({
       success: true,
-      message: "Gemini API is working",
-      geminiResponse: text,
+      message: "Gemini API is working ✅",
+      geminiResponse: response.text,
     });
   } catch (error) {
-    console.error("Gemini Test Error:", error);
-
+    console.error("❌ Gemini Test Error:", error);
     return res.status(500).json({
       success: false,
       message: "Gemini API failed",

@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/logo.png";
+import { useSettings } from "../../context/SettingsContext";
+
 const LoginPage = () => {
+  const { settings, updateSetting } = useSettings(); // 👈 move here, and combine into one call
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -14,7 +17,7 @@ const LoginPage = () => {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch(`${settings.baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -26,6 +29,7 @@ const LoginPage = () => {
         setError(data.message || "Login failed");
       } else {
         localStorage.setItem("token", data.token);
+        updateSetting("authToken", data.token);
         navigate("/home"); // redirect to home
       }
     } catch (err) {
@@ -39,7 +43,7 @@ const LoginPage = () => {
 
     const verifyToken = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/verify", {
+        const res = await fetch(`${settings.baseUrl}/api/auth/verify`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -77,7 +81,7 @@ const LoginPage = () => {
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-semibold mb-2">Welcome back!</h2>
+            <h2 className="text-3xl font-semibold mb-2">Register Now</h2>
             <p className="text-gray-500">Please enter your details</p>
           </div>
 

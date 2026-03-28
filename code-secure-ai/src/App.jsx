@@ -1,8 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./components/Auth/LoginPage";
-import RegisterPage from "./components/Auth/LoginPage";
+import RegisterPage from "./components/Auth/RegisterPage";
 import ApiPage from "./components/ApiPage/ApiPage";
 import ProtectedRoute from "./Validation/ProtectingRoute";
+import DashboardPage from "./components/Dashboard/DashboardPage";
+import HistoryPage from "./components/History/HistoryPage";
+import SettingsPage from "./components/Settings/SettingsPage";
 
 function App() {
   return (
@@ -16,6 +19,32 @@ function App() {
           element={
             <ProtectedRoute>
               <ApiPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute>
+              <HistoryPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />
