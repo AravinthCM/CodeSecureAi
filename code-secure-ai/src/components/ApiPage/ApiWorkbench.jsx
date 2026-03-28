@@ -11,7 +11,8 @@ import {
   Clock,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-
+import { exportToPostman } from "../utils/exportToPostman";
+import { Download } from "lucide-react";
 // Diff view — highlights keys that differ between snapshot and actual
 function DiffView({ snapshot, actual }) {
   if (!snapshot && !actual) return null;
@@ -366,13 +367,33 @@ export default function ApiWorkbench({
     <div className="flex-1 flex flex-col p-6 overflow-hidden bg-gray-50">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
-            {selected.apiName}
-          </h1>
-          <p className="text-sm text-gray-500">
-            Target URL: {url || "Not set"}
-          </p>
+        {/* Header — replace existing header div with this */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+              {selected.apiName}
+            </h1>
+            <p className="text-sm text-gray-500">
+              Target URL: {url || "Not set"}
+            </p>
+          </div>
+
+          {/* Export button — only show when test cases exist */}
+          {payloads.length > 0 && (
+            <button
+              onClick={() =>
+                exportToPostman(selected.apiName, url, method, payloads)
+              }
+              disabled={!url}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition text-gray-600"
+              title={
+                !url ? "Enter a URL first" : "Export as Postman collection"
+              }
+            >
+              <Download size={15} />
+              Export to Postman
+            </button>
+          )}
         </div>
       </div>
 
