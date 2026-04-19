@@ -39,10 +39,14 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/run-history", runHistoryRoutes);
 app.use("/api/scan", scanRoutes);
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected ✅"))
-  .catch((err) => console.error("MongoDB connection error ❌", err));
+if (!process.env.MONGO_URI) {
+  console.log("Skipping DB connection in CI");
+} else {
+  mongoose
+    .connect(process.env.MONGO_URI)
+    .then(() => console.log("MongoDB connected"))
+    .catch(console.error);
+}
 
 app.get("/test", (req, res) => {
   res.json("hi luffy");
