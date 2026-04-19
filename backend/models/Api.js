@@ -17,6 +17,8 @@ const apiSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    controllerCode: { type: String, default: "" },
+    schemaCode: { type: String, default: "" },
   },
   { timestamps: true },
 );

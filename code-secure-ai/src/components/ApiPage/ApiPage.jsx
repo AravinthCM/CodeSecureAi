@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ApiSidebar from "./ApiSidebar";
 import ApiWorkbench from "./ApiWorkbench";
 import { useSettings } from "../../context/SettingsContext";
+import ScanModal from "../Scan/ScanModal";
 
 export default function ApiPage() {
   const { settings } = useSettings();
@@ -20,6 +21,7 @@ export default function ApiPage() {
   const [error, setError] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [runningId, setRunningId] = useState(null); // which case is currently running
+  const [showScanModal, setShowScanModal] = useState(false);
 
   useEffect(() => {
     fetchApis();
@@ -340,6 +342,14 @@ export default function ApiPage() {
     }
   };
 
+  const handleScanComplete = (newApis) => {
+    setApiData((prev) => {
+      const existingIds = new Set(prev.map((a) => a._id));
+      const fresh = newApis.filter((a) => !existingIds.has(a._id));
+      return [...fresh, ...prev];
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
@@ -387,6 +397,7 @@ export default function ApiPage() {
         setSelected={handleSelectApi}
         setMethod={setMethod}
         onDeleteApi={onDeleteApi}
+        onScanClick={() => setShowScanModal(true)}
       />
 
       <ApiWorkbench
@@ -406,6 +417,16 @@ export default function ApiPage() {
         deleteTestCase={deleteTestCase}
         runSingleTestCase={runSingleTestCase}
       />
+
+      {showScanModal && (
+        <ScanModal
+          onClose={() => setShowScanModal(false)}
+          onScanComplete={(apis) => {
+            handleScanComplete(apis);
+            setShowScanModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }

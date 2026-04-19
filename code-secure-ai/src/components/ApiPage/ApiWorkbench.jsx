@@ -381,12 +381,12 @@ export default function ApiWorkbench({
     const saved = localStorage.getItem(`api_state_${selected._id}`);
     if (saved) {
       const parsed = JSON.parse(saved);
-      setModelFile(parsed.modelFile || "");
-      setControllerFile(parsed.controllerFile || "");
+      setModelFile(parsed.modelFile || selected.schemaCode || "");
+      setControllerFile(parsed.controllerFile || selected.controllerCode || "");
       setUrl(parsed.url || "");
     } else {
-      setModelFile("");
-      setControllerFile("");
+      setModelFile(selected.schemaCode || "");
+      setControllerFile(selected.controllerCode || "");
       setUrl("");
     }
   }, [selected, setUrl]);

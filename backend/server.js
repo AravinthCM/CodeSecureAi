@@ -8,6 +8,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import testCaseRoutes from "./routes/testCaseRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import runHistoryRoutes from "./routes/runHistoryRoutes.js";
+import scanRoutes from "./routes/scanRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -36,6 +37,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/test-cases", testCaseRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/run-history", runHistoryRoutes);
+app.use("/api/scan", scanRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)

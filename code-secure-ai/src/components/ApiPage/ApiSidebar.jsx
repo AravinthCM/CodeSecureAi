@@ -1,5 +1,6 @@
 import { Plus, X, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Github } from "lucide-react";
 
 export default function ApiSidebar({
   apiData,
@@ -16,6 +17,7 @@ export default function ApiSidebar({
   setSelected,
   setMethod,
   onDeleteApi,
+  onScanClick,
 }) {
   const [openMenuId, setOpenMenuId] = useState(null);
 
@@ -29,21 +31,27 @@ export default function ApiSidebar({
     <div className="w-80 bg-white border-r border-gray-200 shadow-sm flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex gap-2 mb-3">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2 mb-3">
           <input
             type="text"
             placeholder="Search APIs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            // Changed focus ring to gray
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 outline-none"
+            className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 outline-none"
           />
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            // Changed background to a dark gray for a sleek look
-            className="p-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition"
+            className="flex-shrink-0 p-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition"
           >
             {showAddForm ? <X size={20} /> : <Plus size={20} />}
+          </button>
+
+          <button
+            onClick={onScanClick}
+            title="Scan GitHub repo"
+            className="flex-shrink-0 p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition"
+          >
+            <Github size={18} />
           </button>
         </div>
 
