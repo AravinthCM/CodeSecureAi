@@ -98,19 +98,36 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col justify-between sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">
             Overview of all your APIs and test results
           </p>
         </div>
-        <button
-          onClick={() => navigate("/home")}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
-        >
-          Go to Workbench →
-        </button>
+
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+          <button
+            onClick={() => navigate("/home")}
+            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
+          >
+            Go to Workbench →
+          </button>
+
+          <button
+            onClick={() => navigate("/settings")}
+            className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition"
+          >
+            Settings
+          </button>
+
+          <button
+            onClick={() => navigate("/history")}
+            className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition"
+          >
+            View History
+          </button>
+        </div>
       </div>
 
       {/* Stat cards */}
