@@ -23,5 +23,19 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install dependencies
+      - name: Install frontend deps
         run: npm install
+        working-directory: code-secure-ai
+
+      - name: Check frontend
+        run: npm run build || npm run check
+        working-directory: code-secure-ai
+
+      # 🔹 Backend
+      - name: Install backend deps
+        run: npm install
+        working-directory: backend
+
+      - name: Check backend
+        run: npm run check
+        working-directory: backend
