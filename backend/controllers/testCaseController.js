@@ -80,3 +80,27 @@ export const deleteTestCase = async (req, res) => {
       .json({ message: "Server Error", error: error.message });
   }
 };
+
+// controllers/testCaseController.js — add this
+export const updateTestCaseNotes = async (req, res) => {
+  try {
+    const { notes } = req.body;
+
+    const testCase = await TestCase.findByIdAndUpdate(
+      req.params.id,
+      { notes },
+      { new: true },
+    );
+
+    if (!testCase) {
+      return res.status(404).json({ message: "Test case not found" });
+    }
+
+    return res.json({ success: true, testCase });
+  } catch (error) {
+    console.error("❌ updateTestCaseNotes error:", error);
+    return res
+      .status(500)
+      .json({ message: "Server Error", error: error.message });
+  }
+};

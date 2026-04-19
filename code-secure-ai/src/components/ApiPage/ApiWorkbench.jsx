@@ -13,6 +13,9 @@ import {
 import { useState, useEffect } from "react";
 import { exportToPostman } from "../utils/exportToPostman";
 import { Download } from "lucide-react";
+import { Copy, Check, StickyNote } from "lucide-react";
+import { useSettings } from "../../context/SettingsContext";
+
 // Diff view — highlights keys that differ between snapshot and actual
 function DiffView({ snapshot, actual }) {
   if (!snapshot && !actual) return null;
@@ -89,21 +92,54 @@ function TestCaseCard({
   runSingleTestCase,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [notes, setNotes] = useState(testCase.notes || "");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
 
+  const { settings } = useSettings();
   const isThisRunning = runningId === testCase._id;
-  const hasRun = testCase.lastRun?.timestamp !== null;
-  const isFirstRun =
-    hasRun &&
-    testCase.snapshot !== null &&
-    testCase.lastRun?.passed === true &&
-    JSON.stringify(testCase.lastRun?.actualResponse) ===
-      JSON.stringify(testCase.snapshot);
+
+  // Copy payload to clipboard
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        JSON.stringify(testCase.payload?.payload, null, 2),
+      );
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Copy failed", err);
+    }
+  };
+
+  // Save notes — called on blur so it doesn't fire on every keystroke
+  const handleNotesSave = async () => {
+    if (notes === testCase.notes) return; // no change, skip
+    setSavingNotes(true);
+    try {
+      await fetch(`${settings.baseUrl}/api/test-cases/${testCase._id}/notes`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${settings.authToken}`,
+        },
+        body: JSON.stringify({ notes }),
+      });
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 2000);
+    } catch (err) {
+      console.error("Failed to save notes", err);
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
   const passed = testCase.lastRun?.passed;
   const statusCode = testCase.lastRun?.statusCode;
+  const hasRun = testCase.lastRun?.timestamp !== null;
+  const p = testCase.payload;
 
-  const p = testCase.payload; // the AI-generated payload object
-
-  // Border color based on state
   const borderClass = isThisRunning
     ? "border-blue-400 shadow-blue-100"
     : passed === true
@@ -116,13 +152,12 @@ function TestCaseCard({
     <div
       className={`bg-white border-2 rounded-xl shadow-sm transition-all ${borderClass}`}
     >
-      {/* Card header */}
+      {/* Card header — unchanged */}
       <div
         className="flex items-center justify-between px-4 py-3 cursor-pointer"
         onClick={() => setExpanded((e) => !e)}
       >
         <div className="flex items-center gap-3">
-          {/* Status icon */}
           {isThisRunning ? (
             <Loader2 size={16} className="animate-spin text-blue-500" />
           ) : passed === true ? (
@@ -132,7 +167,6 @@ function TestCaseCard({
           ) : (
             <Clock size={16} className="text-gray-300" />
           )}
-
           <div>
             <p className="text-sm font-semibold text-gray-800">
               {p.title || `Case ${idx + 1}`}
@@ -162,6 +196,8 @@ function TestCaseCard({
               snapshot
             </span>
           )}
+          {/* Notes indicator — show dot if notes exist */}
+          {notes && <StickyNote size={13} className="text-yellow-400" />}
           <span className="text-[10px] text-gray-300">
             {expanded ? "▲" : "▼"}
           </span>
@@ -171,32 +207,38 @@ function TestCaseCard({
       {/* Expanded body */}
       {expanded && (
         <div className="px-4 pb-4 border-t border-gray-100 pt-3 space-y-3">
-          {/* Payload sent */}
+          {/* Payload sent + copy button */}
           <div>
-            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">
-              Payload sent
-            </p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] uppercase font-bold text-gray-400">
+                Payload sent
+              </p>
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 transition"
+              >
+                {copied ? (
+                  <>
+                    <Check size={11} className="text-green-500" />
+                    <span className="text-green-500">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={11} />
+                    Copy
+                  </>
+                )}
+              </button>
+            </div>
             <pre className="text-xs font-mono bg-gray-50 border border-gray-200 rounded p-2 overflow-x-auto text-gray-700">
               {JSON.stringify(p.payload, null, 2)}
             </pre>
           </div>
-          {/* First run — snapshot captured */}
-          {hasRun &&
-            testCase.snapshot &&
-            passed === true &&
-            JSON.stringify(testCase.lastRun?.actualResponse) ===
-              JSON.stringify(testCase.snapshot) && (
-              <div className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-lg px-3 py-2">
-                📸 Snapshot captured on first run. Future runs will diff against
-                this.
-              </div>
-            )}
 
-          {/* AI Expected vs Actual */}
+          {/* Expected vs Actual — unchanged from before */}
           {testCase.snapshot && (
             <div className="mt-3 space-y-2">
               <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                {/* Expected column */}
                 <div>
                   <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">
                     Expected (AI)
@@ -219,8 +261,6 @@ function TestCaseCard({
                     </div>
                   </div>
                 </div>
-
-                {/* Actual column */}
                 <div>
                   <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">
                     Actual (last run)
@@ -252,9 +292,34 @@ function TestCaseCard({
               </div>
             </div>
           )}
-          {/* Actions */}
+
+          {/* Notes section */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1">
+                <StickyNote size={11} /> Notes
+              </p>
+              {savingNotes && (
+                <span className="text-[10px] text-gray-400">Saving...</span>
+              )}
+              {notesSaved && (
+                <span className="text-[10px] text-green-500 flex items-center gap-1">
+                  <Check size={10} /> Saved
+                </span>
+              )}
+            </div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              onBlur={handleNotesSave} // save when user clicks away
+              placeholder="Add notes about this test case..."
+              rows={3}
+              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg resize-none outline-none focus:ring-2 focus:ring-yellow-300 text-gray-700 bg-yellow-50 placeholder-gray-300"
+            />
+          </div>
+
+          {/* Actions — unchanged */}
           <div className="flex gap-2 pt-1">
-            {/* Run this case */}
             <button
               onClick={() => runSingleTestCase(testCase)}
               disabled={isRunning}

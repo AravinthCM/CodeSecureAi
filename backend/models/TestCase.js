@@ -22,6 +22,10 @@ const testCaseSchema = new mongoose.Schema(
       passed: { type: Boolean, default: null },
       timestamp: { type: Date, default: null },
     },
+    notes: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true },
 );
