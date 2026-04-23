@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22]
 
     steps:
       - name: Checkout code
@@ -22,18 +22,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: code-secure-ai/package-lock.json
 
+      # 🔹 Frontend
       - name: Install frontend deps
-        run: npm install
+        run: npm ci
         working-directory: code-secure-ai
 
-      - name: Check frontend
-        run: npm run build || npm run check
+      - name: Run Vitest UI Tests
+        run: npx vitest run
+        working-directory: code-secure-ai
+
+      - name: Build frontend
+        run: npm run build
         working-directory: code-secure-ai
 
       # 🔹 Backend
       - name: Install backend deps
-        run: npm install
+        run: npm ci
         working-directory: backend
 
       - name: Check backend
