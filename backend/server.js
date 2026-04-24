@@ -44,6 +44,10 @@ if (!process.env.MONGO_URI) {
     .catch(console.error);
 }
 
+app.get("/", (req, res) => {
+  res.send("Server is UP and Root is working!");
+});
+
 app.get("/test", (req, res) => {
   res.json("hi luffy");
 });
