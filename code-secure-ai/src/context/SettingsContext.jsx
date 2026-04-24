@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 const SettingsContext = createContext(null);
 
 const DEFAULTS = {
-  baseUrl: "http://localhost:5000",
+  baseUrl: "https://codesecureai.onrender.com",
   defaultMethod: "GET",
   authToken: "",
 };

@@ -143,7 +143,7 @@ export default function HistoryPage() {
   useEffect(() => {
     const fetchApis = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/apis", {
+        const res = await fetch(`https://codesecureai.onrender.com/api/apis`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = await res.json();
@@ -165,7 +165,7 @@ export default function HistoryPage() {
       setLoadingHistory(true);
       try {
         const res = await fetch(
-          `http://localhost:5000/api/run-history/${selectedApi._id}`,
+          `https://codesecureai.onrender.com/api/run-history/${selectedApi._id}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
