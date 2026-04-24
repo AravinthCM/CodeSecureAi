@@ -30,7 +30,7 @@ const LoginPage = () => {
       } else {
         localStorage.setItem("token", data.token);
         updateSetting("authToken", data.token);
-        navigate("/home"); // redirect to home
+        navigate("/dashboard"); // redirect to home
       }
     } catch (err) {
       setError("Server error. Try again later.");
