@@ -25,7 +25,7 @@ export default function ScanModal({ onClose, onScanComplete }) {
     setResult(null);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/scan`, {
+      const res = await fetch(`https://codesecureai.onrender.com/api/scan`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
